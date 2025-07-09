@@ -1,132 +1,101 @@
 
 import React from 'react';
-import { Code, Smartphone, Cloud, Shield, Brain, Blocks, Palette, TrendingUp } from 'lucide-react';
+import { Code, Smartphone, Cloud, Brain, Blocks, BarChart3, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const ServicesSection = () => {
   const services = [
     {
       icon: Code,
-      title: 'Custom Software',
-      description: 'Build enterprise-grade systems tailored to your business needs with scalable architecture.',
-      features: ['Enterprise Applications', 'API Development', 'Database Design', 'System Integration'],
-      isLarge: true
+      title: "Custom Software Development",
+      description: "Tailored software solutions built to meet your unique business requirements and scale with your growth.",
+      features: ["Web Applications", "Desktop Software", "API Development", "System Integration"]
     },
     {
       icon: Smartphone,
-      title: 'Mobile Apps',
-      description: 'Native and cross-platform mobile applications for iOS and Android.',
-      features: ['React Native', 'Flutter', 'Native iOS/Android']
+      title: "Mobile App Development",
+      description: "Native and cross-platform mobile applications that deliver exceptional user experiences.",
+      features: ["iOS Development", "Android Development", "React Native", "Flutter"]
     },
     {
       icon: Cloud,
-      title: 'Cloud & DevOps',
-      description: 'Scalable cloud infrastructure and automated deployment pipelines.',
-      features: ['AWS/Azure', 'Docker', 'CI/CD Pipelines']
-    },
-    {
-      icon: Shield,
-      title: 'Cybersecurity',
-      description: 'Comprehensive security solutions to protect your digital assets.',
-      features: ['Security Audits', 'Penetration Testing', 'Compliance']
+      title: "Cloud & DevOps Solutions",
+      description: "Scalable cloud infrastructure and streamlined deployment processes for modern businesses.",
+      features: ["AWS/Azure Setup", "CI/CD Pipelines", "Containerization", "Monitoring"]
     },
     {
       icon: Brain,
-      title: 'AI & Machine Learning',
-      description: 'Intelligent solutions powered by artificial intelligence and ML algorithms.',
-      features: ['Predictive Analytics', 'NLP', 'Computer Vision'],
-      isLarge: true
+      title: "AI & Machine Learning",
+      description: "Intelligent solutions that automate processes and provide data-driven insights.",
+      features: ["Predictive Analytics", "NLP Solutions", "Computer Vision", "ML Models"]
     },
     {
       icon: Blocks,
-      title: 'Blockchain',
-      description: 'Decentralized applications and smart contract development.',
-      features: ['Smart Contracts', 'DApps', 'Tokenization']
+      title: "Blockchain Development",
+      description: "Secure and transparent blockchain solutions for various industry applications.",
+      features: ["Smart Contracts", "DeFi Solutions", "NFT Platforms", "Cryptocurrency"]
     },
     {
-      icon: Palette,
-      title: 'UI/UX Design',
-      description: 'User-centered design that creates engaging digital experiences.',
-      features: ['User Research', 'Prototyping', 'Design Systems']
-    },
-    {
-      icon: TrendingUp,
-      title: 'Digital Marketing',
-      description: 'Data-driven marketing strategies to grow your online presence.',
-      features: ['SEO/SEM', 'Social Media', 'Analytics']
+      icon: BarChart3,
+      title: "Digital Marketing",
+      description: "Comprehensive digital marketing strategies to boost your online presence and drive growth.",
+      features: ["SEO Optimization", "Social Media", "PPC Campaigns", "Content Marketing"]
     }
   ];
 
+  const handleWhatsAppContact = () => {
+    const phoneNumber = "+917678245132";
+    const message = "Hi! I'm interested in your services. Can you please provide more information?";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
-    <section id="services" className="py-20 bg-white">
+    <section id="services" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center mb-16 animate-on-scroll">
           <h2 className="text-4xl font-bold text-gray-900 mb-4 font-montserrat">
-            Complete IT Services for 
-            <span className="text-orange-500"> Modern Businesses</span>
+            Our 
+            <span className="text-orange-500"> Services</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto font-raleway">
-            From concept to deployment, we provide end-to-end technology solutions 
-            that drive innovation and business growth.
+            We provide comprehensive technology solutions to help your business thrive in the digital age.
           </p>
         </div>
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => (
-            <div
-              key={index}
-              className={`group relative bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-orange-200 animate-on-scroll ${
-                service.isLarge ? 'md:col-span-2 lg:col-span-2' : ''
-              }`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              <div className={`p-6 relative z-10 ${service.isLarge ? 'md:p-8' : ''}`}>
-                <div className="flex items-center mb-4">
-                  <div className="p-3 bg-orange-100 rounded-lg group-hover:bg-orange-500 transition-colors duration-300">
-                    <service.icon className="w-6 h-6 text-orange-500 group-hover:text-white transition-colors duration-300" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 ml-4 group-hover:text-blue-900 transition-colors duration-300">
-                    {service.title}
-                  </h3>
-                </div>
-                
-                <p className="text-gray-600 mb-4 font-raleway leading-relaxed">
-                  {service.description}
-                </p>
-                
-                <ul className="space-y-2 mb-6">
-                  {service.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center text-sm text-gray-600">
-                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-3"></div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <Button 
-                  variant="ghost" 
-                  className="text-orange-500 hover:text-orange-600 hover:bg-orange-50 p-0 h-auto font-semibold group-hover:translate-x-1 transition-transform duration-300"
-                >
-                  Learn More →
-                </Button>
+            <div key={index} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 group animate-on-scroll">
+              <div className="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-orange-500 transition-colors duration-300">
+                <service.icon className="w-8 h-8 text-orange-500 group-hover:text-white transition-colors duration-300" />
               </div>
+              
+              <h3 className="text-xl font-bold text-gray-900 mb-4 font-montserrat">
+                {service.title}
+              </h3>
+              
+              <p className="text-gray-600 mb-6 font-raleway">
+                {service.description}
+              </p>
+              
+              <ul className="space-y-2 mb-6">
+                {service.features.map((feature, featureIndex) => (
+                  <li key={featureIndex} className="flex items-center text-sm text-gray-600">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              
+              <Button 
+                onClick={handleWhatsAppContact}
+                className="w-full bg-green-500 hover:bg-green-600 text-white"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Contact via WhatsApp
+              </Button>
             </div>
           ))}
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center animate-on-scroll">
-          <p className="text-gray-600 mb-6 font-raleway">
-            Ready to transform your business with cutting-edge technology?
-          </p>
-          <Button className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 text-lg">
-            View All Services
-          </Button>
         </div>
       </div>
     </section>

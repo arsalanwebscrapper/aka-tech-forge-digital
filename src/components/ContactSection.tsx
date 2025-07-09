@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -13,19 +14,46 @@ export const ContactSection = () => {
     service: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    toast({
-      title: "Message Sent!",
-      description: "We'll get back to you within 24 hours.",
-    });
-    setFormData({ name: '', email: '', service: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            service: formData.service,
+            message: formData.message
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Thank you for contacting us. We'll get back to you within 24 hours.",
+      });
+      
+      setFormData({ name: '', email: '', service: '', message: '' });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -67,7 +95,7 @@ export const ContactSection = () => {
                 </div>
                 <div className="ml-4">
                   <h4 className="text-lg font-semibold text-gray-900">Phone</h4>
-                  <p className="text-gray-600">+91-XXX-XXX-XXXX</p>
+                  <p className="text-gray-600">+91-767-824-5132</p>
                 </div>
               </div>
 
@@ -134,7 +162,7 @@ export const ContactSection = () => {
                   <select
                     name="service"
                     value={formData.service}
-                    onChange={(e) => setFormData(prev => ({ ...prev, service: e.target.value }))}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   >
@@ -145,6 +173,7 @@ export const ContactSection = () => {
                     <option value="cloud-devops">Cloud & DevOps</option>
                     <option value="ai-ml">AI & Machine Learning</option>
                     <option value="blockchain">Blockchain</option>
+                    <option value="digital-marketing">Digital Marketing</option>
                     <option value="consultation">Free Consultation</option>
                   </select>
                 </div>
@@ -164,8 +193,9 @@ export const ContactSection = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 text-lg font-semibold"
+                  disabled={isSubmitting}
                 >
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
             </div>

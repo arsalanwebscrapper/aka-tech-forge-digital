@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import BlogManagement from "./pages/admin/BlogManagement";
 import BlogEditor from "./pages/admin/BlogEditor";
+import ContactMessages from "./pages/admin/ContactMessages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,11 @@ const App = () => (
             <Route path="/admin/blogs/edit/:id" element={
               <ProtectedRoute>
                 <BlogEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/contacts" element={
+              <ProtectedRoute>
+                <ContactMessages />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

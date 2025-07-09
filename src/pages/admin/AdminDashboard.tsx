@@ -13,7 +13,9 @@ import {
   Settings,
   LogOut,
   Plus,
-  Edit
+  Edit,
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 
 interface BlogStats {
@@ -30,10 +32,16 @@ interface RecentBlog {
   created_at: string;
 }
 
+interface ContactStats {
+  total: number;
+  unread: number;
+}
+
 const AdminDashboard = () => {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const [blogStats, setBlogStats] = useState<BlogStats>({ total: 0, published: 0, drafts: 0, archived: 0 });
+  const [contactStats, setContactStats] = useState<ContactStats>({ total: 0, unread: 0 });
   const [recentBlogs, setRecentBlogs] = useState<RecentBlog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +68,21 @@ const AdminDashboard = () => {
 
       setBlogStats(stats);
 
+      // Fetch contact message statistics
+      const { data: contacts, error: contactsError } = await supabase
+        .from('contact_messages')
+        .select('status');
+
+      if (contactsError) throw contactsError;
+
+      const contactStatsData = contacts.reduce((acc, contact) => {
+        acc.total++;
+        if (contact.status === 'unread') acc.unread++;
+        return acc;
+      }, { total: 0, unread: 0 });
+
+      setContactStats(contactStatsData);
+
       // Fetch recent blogs
       const { data: recent, error: recentError } = await supabase
         .from('blogs')
@@ -84,8 +107,8 @@ const AdminDashboard = () => {
   const stats = [
     { title: 'Total Blogs', value: blogStats.total.toString(), icon: FileText, color: 'bg-blue-500' },
     { title: 'Published', value: blogStats.published.toString(), icon: BarChart3, color: 'bg-green-500' },
-    { title: 'Drafts', value: blogStats.drafts.toString(), icon: Edit, color: 'bg-yellow-500' },
-    { title: 'Archived', value: blogStats.archived.toString(), icon: Users, color: 'bg-gray-500' },
+    { title: 'Contact Messages', value: contactStats.total.toString(), icon: Mail, color: 'bg-purple-500' },
+    { title: 'Unread Messages', value: contactStats.unread.toString(), icon: MessageSquare, color: 'bg-red-500' },
   ];
 
   const quickActions = [
@@ -102,6 +125,13 @@ const AdminDashboard = () => {
       icon: Edit,
       action: () => navigate('/admin/blogs'),
       color: 'bg-green-600 hover:bg-green-700'
+    },
+    { 
+      title: 'View Contact Messages', 
+      description: 'Review and respond to customer inquiries',
+      icon: Mail,
+      action: () => navigate('/admin/contacts'),
+      color: 'bg-purple-600 hover:bg-purple-700'
     },
   ];
 
@@ -164,7 +194,7 @@ const AdminDashboard = () => {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {quickActions.map((action, index) => (
                 <Button
                   key={index}
