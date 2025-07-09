@@ -77,13 +77,18 @@ const BlogEditor = () => {
 
       if (error) throw error;
 
+      // Type assertion to ensure status is properly typed
+      const typedStatus = (data.status === 'published' || data.status === 'archived') 
+        ? data.status 
+        : 'draft' as 'draft' | 'published' | 'archived';
+
       setFormData({
         title: data.title || '',
         slug: data.slug || '',
         content: data.content || '',
         excerpt: data.excerpt || '',
         featured_image: data.featured_image || '',
-        status: data.status || 'draft',
+        status: typedStatus,
         seo_title: data.seo_title || '',
         seo_description: data.seo_description || '',
         keywords: data.keywords || [],
@@ -414,7 +419,7 @@ const BlogEditor = () => {
               <CardContent>
                 <select
                   value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  onChange={(e) => handleInputChange('status', e.target.value as 'draft' | 'published' | 'archived')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="draft">Draft</option>

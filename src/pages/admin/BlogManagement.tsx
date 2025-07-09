@@ -59,7 +59,16 @@ const BlogManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBlogs(data || []);
+      
+      // Type assertion to ensure status is properly typed
+      const typedBlogs: BlogPost[] = (data || []).map(blog => ({
+        ...blog,
+        status: (blog.status === 'published' || blog.status === 'archived') 
+          ? blog.status 
+          : 'draft' as 'published' | 'draft' | 'archived'
+      }));
+      
+      setBlogs(typedBlogs);
     } catch (error) {
       console.error('Error fetching blogs:', error);
       toast({
