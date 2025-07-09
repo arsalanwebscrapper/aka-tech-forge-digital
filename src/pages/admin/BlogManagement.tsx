@@ -14,7 +14,8 @@ import {
   Calendar,
   User,
   Tag,
-  ArrowLeft
+  ArrowLeft,
+  FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
