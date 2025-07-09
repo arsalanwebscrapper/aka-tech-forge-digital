@@ -1,39 +1,69 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const { login, signup, user, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/admin');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const success = await login(email, password);
-    
-    if (success) {
+    try {
+      let result;
+      if (isSignUp) {
+        result = await signup(email, password, name);
+      } else {
+        result = await login(email, password);
+      }
+      
+      if (result.error) {
+        toast({
+          title: isSignUp ? "Sign Up Failed" : "Login Failed",
+          description: result.error.message || "Authentication failed",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: isSignUp ? "Account created successfully! Please check your email." : "Welcome back!",
+        });
+        if (!isSignUp) {
+          navigate('/admin');
+        }
+      }
+    } catch (error) {
       toast({
-        title: "Login Successful",
-        description: "Welcome to AKACorpTech Admin Panel",
-      });
-      navigate('/admin');
-    } else {
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password",
+        title: "Error",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
     }
+  };
+
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setEmail('');
+    setPassword('');
+    setName('');
   };
 
   return (
@@ -45,11 +75,33 @@ const Login = () => {
               AKACorpTech
             </h1>
           </div>
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <p className="text-gray-600">Access your admin dashboard</p>
+          <CardTitle className="text-2xl">
+            {isSignUp ? 'Create Account' : 'Admin Login'}
+          </CardTitle>
+          <p className="text-gray-600">
+            {isSignUp ? 'Sign up for admin access' : 'Access your admin dashboard'}
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <label htmlFor="name" className="text-sm font-medium">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-10"
+                    required={isSignUp}
+                  />
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">Email</label>
               <div className="relative">
@@ -57,7 +109,7 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@akacorptech.com"
+                  placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -78,6 +130,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
                   required
+                  minLength={6}
                 />
                 <Button
                   type="button"
@@ -96,14 +149,21 @@ const Login = () => {
               className="w-full bg-orange-500 hover:bg-orange-600"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Please wait..." : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-gray-500">Email: admin@akacorptech.com</p>
-            <p className="text-xs text-gray-500">Password: admin123</p>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            </p>
+            <Button
+              variant="link"
+              onClick={toggleMode}
+              className="text-orange-600 hover:text-orange-700"
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </Button>
           </div>
         </CardContent>
       </Card>

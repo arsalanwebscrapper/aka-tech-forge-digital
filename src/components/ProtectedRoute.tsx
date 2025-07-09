@@ -18,7 +18,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

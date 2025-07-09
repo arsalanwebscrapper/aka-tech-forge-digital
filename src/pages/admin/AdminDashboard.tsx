@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   FileText, 
   Briefcase, 
@@ -15,20 +16,76 @@ import {
   Edit
 } from 'lucide-react';
 
-const AdminDashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+interface BlogStats {
+  total: number;
+  published: number;
+  drafts: number;
+  archived: number;
+}
 
-  const handleLogout = () => {
-    logout();
+interface RecentBlog {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+}
+
+const AdminDashboard = () => {
+  const { user, profile, logout } = useAuth();
+  const navigate = useNavigate();
+  const [blogStats, setBlogStats] = useState<BlogStats>({ total: 0, published: 0, drafts: 0, archived: 0 });
+  const [recentBlogs, setRecentBlogs] = useState<RecentBlog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch blog statistics
+      const { data: blogs, error: blogsError } = await supabase
+        .from('blogs')
+        .select('status');
+
+      if (blogsError) throw blogsError;
+
+      const stats = blogs.reduce((acc, blog) => {
+        acc.total++;
+        if (blog.status === 'published') acc.published++;
+        else if (blog.status === 'draft') acc.drafts++;
+        else if (blog.status === 'archived') acc.archived++;
+        return acc;
+      }, { total: 0, published: 0, drafts: 0, archived: 0 });
+
+      setBlogStats(stats);
+
+      // Fetch recent blogs
+      const { data: recent, error: recentError } = await supabase
+        .from('blogs')
+        .select('id, title, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentError) throw recentError;
+      setRecentBlogs(recent || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
   const stats = [
-    { title: 'Total Blogs', value: '24', icon: FileText, color: 'bg-blue-500' },
-    { title: 'Portfolio Items', value: '18', icon: Briefcase, color: 'bg-green-500' },
-    { title: 'Active Projects', value: '12', icon: BarChart3, color: 'bg-orange-500' },
-    { title: 'Team Members', value: '50', icon: Users, color: 'bg-purple-500' },
+    { title: 'Total Blogs', value: blogStats.total.toString(), icon: FileText, color: 'bg-blue-500' },
+    { title: 'Published', value: blogStats.published.toString(), icon: BarChart3, color: 'bg-green-500' },
+    { title: 'Drafts', value: blogStats.drafts.toString(), icon: Edit, color: 'bg-yellow-500' },
+    { title: 'Archived', value: blogStats.archived.toString(), icon: Users, color: 'bg-gray-500' },
   ];
 
   const quickActions = [
@@ -46,21 +103,15 @@ const AdminDashboard = () => {
       action: () => navigate('/admin/blogs'),
       color: 'bg-green-600 hover:bg-green-700'
     },
-    { 
-      title: 'Add Portfolio Item', 
-      description: 'Showcase your latest project',
-      icon: Plus,
-      action: () => navigate('/admin/portfolio/new'),
-      color: 'bg-orange-600 hover:bg-orange-700'
-    },
-    { 
-      title: 'Manage Portfolio', 
-      description: 'Update your portfolio showcase',
-      icon: Briefcase,
-      action: () => navigate('/admin/portfolio'),
-      color: 'bg-purple-600 hover:bg-purple-700'
-    },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -70,7 +121,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm text-gray-600">Welcome back, {user?.name}</p>
+              <p className="text-sm text-gray-600">Welcome back, {profile?.name || user?.email}</p>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
@@ -135,61 +186,41 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Blog Posts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { title: 'AI Trends in 2024', date: '2 days ago', status: 'Published' },
-                  { title: 'Blockchain Revolution', date: '5 days ago', status: 'Draft' },
-                  { title: 'Cloud Computing Guide', date: '1 week ago', status: 'Published' },
-                ].map((post, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Blog Posts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentBlogs.length > 0 ? (
+                recentBlogs.map((blog) => (
+                  <div key={blog.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <h4 className="font-medium">{post.title}</h4>
-                      <p className="text-sm text-gray-600">{post.date}</p>
+                      <h4 className="font-medium">{blog.title}</h4>
+                      <p className="text-sm text-gray-600">
+                        {new Date(blog.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      post.status === 'Published' 
+                      blog.status === 'published' 
                         ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
+                        : blog.status === 'draft'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {post.status}
+                      {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
                     </span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Portfolio Updates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { title: 'AI-Powered CRM', date: '3 days ago', type: 'Web App' },
-                  { title: 'Blockchain Voting', date: '1 week ago', type: 'Blockchain' },
-                  { title: 'E-commerce Platform', date: '2 weeks ago', type: 'E-commerce' },
-                ].map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{item.title}</h4>
-                      <p className="text-sm text-gray-600">{item.date}</p>
-                    </div>
-                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                      {item.type}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No blog posts yet. Create your first blog post!</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

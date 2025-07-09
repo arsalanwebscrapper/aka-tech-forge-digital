@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Plus, 
   Search, 
@@ -23,94 +24,83 @@ interface BlogPost {
   id: string;
   title: string;
   slug: string;
-  excerpt: string;
+  excerpt: string | null;
   content: string;
-  featuredImage: string;
-  author: string;
-  publishDate: string;
+  featured_image: string | null;
+  author_id: string;
+  publish_date: string | null;
   status: 'published' | 'draft' | 'archived';
-  tags: string[];
-  seoTitle: string;
-  seoDescription: string;
-  keywords: string[];
-  readTime: number;
+  tags: string[] | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  keywords: string[] | null;
+  read_time: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const BlogManagement = () => {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Mock data - replace with actual API calls
   useEffect(() => {
-    const mockBlogs: BlogPost[] = [
-      {
-        id: '1',
-        title: 'The Future of AI in Software Development',
-        slug: 'future-ai-software-development',
-        excerpt: 'Exploring how artificial intelligence is revolutionizing the way we build software applications.',
-        content: 'Full content here...',
-        featuredImage: '/api/placeholder/400/250',
-        author: 'John Doe',
-        publishDate: '2024-01-15',
-        status: 'published',
-        tags: ['AI', 'Software Development', 'Technology'],
-        seoTitle: 'AI in Software Development: Future Trends & Impact',
-        seoDescription: 'Discover how AI is transforming software development with cutting-edge tools and methodologies.',
-        keywords: ['AI software development', 'artificial intelligence', 'programming'],
-        readTime: 8
-      },
-      {
-        id: '2',
-        title: 'Blockchain Technology: Beyond Cryptocurrency',
-        slug: 'blockchain-beyond-cryptocurrency',
-        excerpt: 'Understanding the diverse applications of blockchain technology in various industries.',
-        content: 'Full content here...',
-        featuredImage: '/api/placeholder/400/250',
-        author: 'Jane Smith',
-        publishDate: '2024-01-12',
-        status: 'draft',
-        tags: ['Blockchain', 'Technology', 'Innovation'],
-        seoTitle: 'Blockchain Applications Beyond Crypto | AKACorpTech',
-        seoDescription: 'Explore blockchain use cases in supply chain, healthcare, and more.',
-        keywords: ['blockchain applications', 'distributed ledger', 'smart contracts'],
-        readTime: 6
-      },
-      {
-        id: '3',
-        title: 'Cloud Computing Best Practices for Startups',
-        slug: 'cloud-computing-startups',
-        excerpt: 'Essential cloud strategies every startup should implement for scalable growth.',
-        content: 'Full content here...',
-        featuredImage: '/api/placeholder/400/250',
-        author: 'Mike Johnson',
-        publishDate: '2024-01-10',
-        status: 'published',
-        tags: ['Cloud Computing', 'Startups', 'DevOps'],
-        seoTitle: 'Cloud Computing Guide for Startups | Best Practices',
-        seoDescription: 'Learn essential cloud computing strategies for startup success.',
-        keywords: ['cloud computing startups', 'AWS', 'scalable architecture'],
-        readTime: 10
-      }
-    ];
-    setBlogs(mockBlogs);
+    fetchBlogs();
   }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blogs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBlogs(data || []);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch blogs",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredBlogs = blogs.filter(blog => {
     const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (blog.tags && blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesStatus = filterStatus === 'all' || blog.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (id: string) => {
-    setBlogs(blogs.filter(blog => blog.id !== id));
-    toast({
-      title: "Blog Deleted",
-      description: "The blog post has been deleted successfully.",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('blogs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setBlogs(blogs.filter(blog => blog.id !== id));
+      toast({
+        title: "Blog Deleted",
+        description: "The blog post has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete blog post",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -121,6 +111,14 @@ const BlogManagement = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -230,13 +228,15 @@ const BlogManagement = () => {
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Featured Image */}
-                  <div className="lg:w-48 flex-shrink-0">
-                    <img
-                      src={blog.featuredImage}
-                      alt={blog.title}
-                      className="w-full h-32 lg:h-24 object-cover rounded-lg"
-                    />
-                  </div>
+                  {blog.featured_image && (
+                    <div className="lg:w-48 flex-shrink-0">
+                      <img
+                        src={blog.featured_image}
+                        alt={blog.title}
+                        className="w-full h-32 lg:h-24 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
 
                   {/* Content */}
                   <div className="flex-1">
@@ -249,33 +249,35 @@ const BlogManagement = () => {
                       </Badge>
                     </div>
 
-                    <p className="text-gray-600 mb-3 line-clamp-2">{blog.excerpt}</p>
+                    {blog.excerpt && (
+                      <p className="text-gray-600 mb-3 line-clamp-2">{blog.excerpt}</p>
+                    )}
 
                     {/* Meta Info */}
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
                       <div className="flex items-center">
-                        <User className="w-4 h-4 mr-1" />
-                        {blog.author}
-                      </div>
-                      <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {new Date(blog.publishDate).toLocaleDateString()}
+                        {new Date(blog.created_at).toLocaleDateString()}
                       </div>
-                      <div className="flex items-center">
-                        <Eye className="w-4 h-4 mr-1" />
-                        {blog.readTime} min read
-                      </div>
+                      {blog.read_time && (
+                        <div className="flex items-center">
+                          <Eye className="w-4 h-4 mr-1" />
+                          {blog.read_time} min read
+                        </div>
+                      )}
                     </div>
 
                     {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {blog.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          <Tag className="w-3 h-3 mr-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+                    {blog.tags && blog.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {blog.tags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            <Tag className="w-3 h-3 mr-1" />
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex gap-2">
@@ -286,14 +288,6 @@ const BlogManagement = () => {
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`/blog/${blog.slug}`, '_blank')}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview
                       </Button>
                       <Button
                         variant="outline"

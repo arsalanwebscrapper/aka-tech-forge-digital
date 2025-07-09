@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import BlogManagement from "./pages/admin/BlogManagement";
+import BlogEditor from "./pages/admin/BlogEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,16 @@ const App = () => (
             <Route path="/admin/blogs" element={
               <ProtectedRoute>
                 <BlogManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/blogs/new" element={
+              <ProtectedRoute>
+                <BlogEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/blogs/edit/:id" element={
+              <ProtectedRoute>
+                <BlogEditor />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
